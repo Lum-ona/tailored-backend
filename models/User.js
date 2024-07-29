@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   institution: { type: String },
   role: { type: String, required: true }, // Added role field
+  county: { type: String }, // Added county field
+  grade: { type: String }, // Added grade field
 });
 
 module.exports = mongoose.model("User", userSchema);
