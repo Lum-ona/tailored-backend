@@ -1,18 +1,16 @@
 const mongoose = require("mongoose");
 
-const studentSchema = new mongoose.Schema({
+const TutorSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   address: { type: String, required: true },
   city: { type: String, required: true },
-  school: { type: String, required: true },
+  courses: { type: String, required: true }, // Or use an array if multiple courses
   grade: { type: String, required: true },
   dateOfBirth: { type: Date, required: true },
   gender: { type: String, required: true },
   parentName: { type: String, required: true },
   parentContactNumber: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-  status: { type: String, default: "Active" },
 });
 
-module.exports = mongoose.model("Student", studentSchema);
+module.exports = mongoose.model("Tutor", TutorSchema);

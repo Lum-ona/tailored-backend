@@ -2,6 +2,16 @@ const express = require("express");
 const router = express.Router();
 const Student = require("../models/Student");
 
+// Fetch All Students
+router.get("/", async (req, res) => {
+  try {
+    const students = await Student.find({});
+    res.status(200).json(students);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
 // Add Student
 router.post("/", async (req, res) => {
   try {

@@ -21,9 +21,12 @@ mongoose
 const usersRoutes = require("./routes/users");
 const studentsRoutes = require("./routes/students");
 const coursesRoutes = require("./routes/courses");
+
 const courseContentsRoutes = require("./routes/courseContents");
 const helpSupportRoutes = require("./routes/helpSupport");
+const tutorsRoutes = require("./routes/tutors");
 
+app.use("/api/tutors", tutorsRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/students", studentsRoutes);
 app.use("/api/courses", coursesRoutes);

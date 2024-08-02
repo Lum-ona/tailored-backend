@@ -2,7 +2,17 @@ const express = require("express");
 const router = express.Router();
 const Course = require("../models/Course");
 
-// Add Course
+// Get all courses
+router.get("/", async (req, res) => {
+  try {
+    const courses = await Course.find({});
+    res.status(200).json(courses);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+});
+
+// Add a new course
 router.post("/", async (req, res) => {
   try {
     const course = new Course(req.body);
@@ -13,7 +23,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Edit Course
+// Update a course
 router.put("/:id", async (req, res) => {
   try {
     const course = await Course.findByIdAndUpdate(req.params.id, req.body, {

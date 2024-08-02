@@ -1,8 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const Admin = require("../models/Admin");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+
+require("dotenv").config();
 
 // Route: POST /api/users/signup
 router.post("/signup", async (req, res) => {
@@ -54,17 +60,32 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
+  console.log("Login attempt:", { email }); // Debugging log
+
   try {
     // Check if user exists
     let user = await User.findOne({ email });
     if (!user) {
+      console.log("User not found"); // Debugging log
       return res.status(400).json({ message: "Invalid Credentials" });
     }
 
     // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log("Password mismatch"); // Debugging log
       return res.status(400).json({ message: "Invalid Credentials" });
+    }
+
+    // Check if email exists in admins collection
+    const admin = await Admin.findOne({ email });
+    if (admin) {
+      console.log("Admin found, updating role"); // Debugging log
+      // Update user's role to "admin" if it is not already
+      if (user.role !== "admin") {
+        user.role = "admin";
+        await user.save();
+      }
     }
 
     // Create and return JSON Web Token
@@ -79,12 +100,129 @@ router.post("/login", async (req, res) => {
       process.env.JWT_SECRET, // Use the secret from environment variables
       { expiresIn: "1h" },
       (err, token) => {
-        if (err) throw err;
+        if (err) {
+          console.log("Token creation error:", err); // Debugging log
+          throw err;
+        }
+        console.log("Login successful, token created"); // Debugging log
         res.status(200).json({ token, user });
       }
     );
   } catch (err) {
+    console.error("Error during login:", err.message); // Debugging log
+    res.status(500).send("Server Error");
+  }
+});
+
+// Route: POST /api/users/forgot-password
+router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // Create a password reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+    const resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+
+    user.resetPasswordToken = resetPasswordToken;
+    user.resetPasswordExpire = resetPasswordExpire;
+    await user.save();
+
+    // Send email
+    const resetUrl = `http://localhost:3000/registration/reset-password/${resetToken}`;
+    const message = `You requested a password reset. Please make a PUT request to: \n\n ${resetUrl}`;
+
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      to: user.email,
+      subject: "Password Reset Request",
+      text: message,
+    });
+
+    res.status(200).json({ message: "Email sent" });
+  } catch (err) {
     console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// Reset Password Route
+router.put("/reset-password/:resetToken", async (req, res) => {
+  const { resetToken } = req.params;
+  const { password } = req.body;
+
+  try {
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    // Logging to debug the token and expiration
+    console.log("Received Reset Password Token:", resetToken);
+    console.log("Hashed Token:", resetPasswordToken);
+    console.log("Current Time:", Date.now());
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      console.log("Invalid or expired token.");
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successful" });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+router.get("/verify-reset-token/:resetToken", async (req, res) => {
+  const { resetToken } = req.params;
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired token" });
+    }
+
+    res.status(200).json({ message: "Token is valid" });
+  } catch (err) {
+    console.error("Error verifying token:", err.message);
     res.status(500).send("Server Error");
   }
 });
