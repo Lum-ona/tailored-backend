@@ -9,8 +9,6 @@ const TutorSchema = new mongoose.Schema({
   grade: { type: String, required: true },
   dateOfBirth: { type: Date, required: true },
   gender: { type: String, required: true },
-  parentName: { type: String, required: true },
-  parentContactNumber: { type: String, required: true },
 });
 
 module.exports = mongoose.model("Tutor", TutorSchema);
