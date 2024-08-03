@@ -239,4 +239,42 @@ router.get("/verify-reset-token/:resetToken", async (req, res) => {
   }
 });
 
+// Fetch user details
+router.get("/fetch/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    res.json(user);
+  } catch (error) {
+    res.status(500).send("Server error");
+  }
+});
+
+// Update user details
+router.put("/update/:id", async (req, res) => {
+  const { fullName, email, address, city, school, grade, dateOfBirth, gender } =
+    req.body;
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    const [firstName, lastName] = fullName.split(" ");
+    user.firstName = firstName;
+    user.lastName = lastName;
+    user.email = email;
+    user.address = address;
+    user.city = city;
+    user.school = school;
+    user.grade = grade;
+    user.dateOfBirth = dateOfBirth;
+    user.gender = gender;
+
+    await user.save();
+    res.json(user);
+  } catch (error) {
+    res.status(500).send("Server error");
+  }
+});
+
 module.exports = router;
