@@ -25,6 +25,7 @@ const courseContentsRoutes = require("./routes/courseContents");
 const helpSupportRoutes = require("./routes/helpSupport");
 const tutorsRoutes = require("./routes/tutors");
 const overviewRoutes = require("./routes/overview");
+const assignmentsRoutes = require("./routes/assignments");
 
 app.use("/api/tutors", tutorsRoutes);
 app.use("/api/users", usersRoutes);
@@ -33,6 +34,7 @@ app.use("/api/courses", coursesRoutes);
 app.use("/api/course-contents", courseContentsRoutes);
 app.use("/api/help-support", helpSupportRoutes);
 app.use("/api/overview", overviewRoutes);
+app.use("/api/assignments", assignmentsRoutes);
 
 // Start server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

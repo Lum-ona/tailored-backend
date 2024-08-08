@@ -30,6 +30,7 @@ router.put("/:id", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const tutors = await Tutor.find();
+    console.log(tutors);
     res.json(tutors);
   } catch (err) {
     res.status(500).json({ message: err.message });

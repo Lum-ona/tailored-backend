@@ -10,6 +10,7 @@ const assignmentSchema = new mongoose.Schema({
     required: true,
   },
   completed: { type: Boolean, default: false },
+  multimediaLinks: [{ type: String }], // Array of multimedia links (YouTube, Google Drive)
 });
 
 module.exports = mongoose.model("Assignment", assignmentSchema);
